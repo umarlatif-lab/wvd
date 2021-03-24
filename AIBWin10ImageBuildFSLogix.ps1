@@ -1,11 +1,22 @@
 #Script to setup golden image with Azure Image Builder
 
-#InstallFSLogix
-New-Item -Path "c:\" -Name "temp" -ItemType "directory"
-Invoke-WebRequest -Uri 'https://aka.ms/fslogix_download' -OutFile 'c:\temp\fslogix.zip'
-Start-Sleep -Seconds 10
-Expand-Archive -Path 'C:\temp\fslogix.zip' -DestinationPath 'C:\temp\fslogix\'  -Force
-Invoke-Expression -Command 'C:\temp\fslogix\x64\Release\FSLogixAppsSetup.exe /install /quiet /norestart'
+write-host 'AIB Customization: Downloading FsLogix'
+New-Item -Path C:\\ -Name fslogix -ItemType Directory -ErrorAction SilentlyContinue
+$LocalPath = 'C:\\fslogix'
+$WVDflogixURL = 'https://raw.githubusercontent.com/DeanCefola/Azure-WVD/master/PowerShell/FSLogixSetup.ps1'
+$WVDFslogixInstaller = 'FSLogixSetup.ps1'
+$outputPath = $LocalPath + '\' + $WVDFslogixInstaller
+Invoke-WebRequest -Uri $WVDflogixURL -OutFile $outputPath
+set-Location $LocalPath
 
-#Start sleep
-Start-Sleep -Seconds 30
+$fsLogixURL="https://aka.ms/fslogix_download"
+$installerFile="fslogix_download.zip"
+
+Invoke-WebRequest $fsLogixURL -OutFile $LocalPath\$installerFile
+Expand-Archive $LocalPath\$installerFile -DestinationPath $LocalPath
+write-host 'AIB Customization: Download Fslogix installer finished'
+
+write-host 'AIB Customization: Start Fslogix installer'
+Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Force -Verbose
+.\\FSLogixSetup.ps1 -ProfilePath \\wvdaxaukfslogix.file.core.windows.net\wvdaxaukfslogix\Profiles -Verbose 
+write-host 'AIB Customization: Finished Fslogix installer' 
